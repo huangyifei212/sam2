@@ -8,13 +8,13 @@ from setuptools import find_packages, setup
 from torch.utils.cpp_extension import BuildExtension, CUDAExtension
 
 # Package metadata
-NAME = "SAM 2"
+NAME = "SAM 2 For Medical 3D"
 VERSION = "1.0"
-DESCRIPTION = "SAM 2: Segment Anything in Images and Videos"
-URL = "https://github.com/facebookresearch/segment-anything-2"
-AUTHOR = "Meta AI"
-AUTHOR_EMAIL = "segment-anything@meta.com"
+URL = "https://github.com/Chuyun-Shen/SAM_2_Medical_3D"
+AUTHOR = "Chuyun Shen"
+AUTHOR_EMAIL = "chinsoyun@gmail.com"
 LICENSE = "Apache 2.0"
+DESCRIPTION = "A 3D medical image segmentation model based on the SAM 2 architecture."
 
 # Read the contents of README file
 with open("README.md", "r") as f:
@@ -29,6 +29,10 @@ REQUIRED_PACKAGES = [
     "hydra-core>=1.3.2",
     "iopath>=0.1.10",
     "pillow>=9.4.0",
+    "scipy>=1.14.0",
+    "matplotlib>=3.9.1",
+    "nibabel>=5.2.1",
+    "monai>=1.3.2",
 ]
 
 EXTRA_PACKAGES = {
