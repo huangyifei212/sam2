@@ -8,8 +8,8 @@ from monai.metrics import DiceHelper, compute_surface_dice
 # Argument parser
 def parse_args():
     parser = argparse.ArgumentParser(description="SAM2 Video Predictor")
-    parser.add_argument('--base_video_dir', type=str,  help="Base directory containing all video directories", required=True)
-    parser.add_argument('--prefix', type=str, help="Prefix for video directories", default="BraTS20_Training_")
+    parser.add_argument('--base_video_dir', type=str,  help="Base directory containing all video directories", required=True) #基础视频目录，包含所有视频文件夹。
+    parser.add_argument('--prefix', type=str, help="Prefix for video directories", default="BraTS20_Training_") #视频文件夹的前缀（默认为 "BraTS20_Training_"）
     return parser.parse_args()
 
 # Use bfloat16 for the entire notebook
@@ -24,6 +24,7 @@ with torch.inference_mode(), torch.autocast(device_type="cuda", dtype=torch.bflo
     sam2_checkpoint = "./checkpoints/sam2_hiera_large.pt"
     model_cfg = "sam2_hiera_l.yaml"
 
+    # 初始化模型预测器  构建视频预测器实例，加载指定的模型配置和检查点。
     predictor = build_sam2_video_predictor(model_cfg, sam2_checkpoint)
 
     # Parse arguments
@@ -39,6 +40,7 @@ with torch.inference_mode(), torch.autocast(device_type="cuda", dtype=torch.bflo
     dice_scores = []
     nsd_scores = []
 
+    # 对于每个视频文件夹，获取所有 .jpg 或 .jpeg 文件名并按数字排序。
     for video_dir in video_dirs:
         ann_obj_id = 1
         # Scan all the JPEG frame names in this directory
@@ -49,6 +51,7 @@ with torch.inference_mode(), torch.autocast(device_type="cuda", dtype=torch.bflo
         frame_names.sort(key=lambda p: int(os.path.splitext(p)[0]))
         print(f"Processing {video_dir}, number of frames: {len(frame_names)}")
 
+        # 若当前文件夹中无有效帧，输出警告并跳过。
         if len(frame_names) == 0:
             print(f"No frames found in {video_dir}, skipping...")
             continue
@@ -63,6 +66,7 @@ with torch.inference_mode(), torch.autocast(device_type="cuda", dtype=torch.bflo
         predictor.reset_state(inference_state)
         predictor.add_new_mask(inference_state=inference_state, frame_idx=frame_idx, obj_id=ann_obj_id, mask=out_mask_logits > 0.0)
 
+        # 在当前视频文件夹中，从中间帧开始，沿正反方向逐帧推理，并存储每帧的分割结果 video_segments
         video_segments = {}  # video_segments contains the per-frame segmentation results
         for out_frame_idx, out_obj_ids, out_mask_logits in predictor.propagate_in_video(inference_state):
             video_segments[out_frame_idx] = {
@@ -74,15 +78,20 @@ with torch.inference_mode(), torch.autocast(device_type="cuda", dtype=torch.bflo
                 out_obj_id: (out_mask_logits[i] > 0.0).cpu().numpy()
                 for i, out_obj_id in enumerate(out_obj_ids)
             }
+        
+        # 将 video_segments 中的分割结果和对应的 .npy 标签文件加载为 video_seg_3d 和 gt_3d 
+        # 将 video_seg_3d 和 gt_3d 转换为张量，并调整维度以便计算分割准确性指标
         video_seg_3d = np.stack([video_segments[k][1] for k in video_segments])
         gt_3d = np.stack([np.load(os.path.join(video_dir, frame_names[k].replace(".jpg", ".npy")))[None] for k in video_segments])
         print(video_seg_3d.shape, gt_3d.shape)
+
         n_classes, batch_size = 1, 1
         spatial_shape = (video_seg_3d.shape[0], video_seg_3d.shape[2], video_seg_3d.shape[3]) 
 
         y_pred = torch.tensor(video_seg_3d).float().reshape(batch_size, n_classes, *spatial_shape)  # prediction
         y = torch.tensor(gt_3d).float().reshape(batch_size, n_classes, *spatial_shape)  # ground truth
 
+        # 使用 DiceHelper 和 compute_surface_dice 计算当前视频的 Dice 和 nsd 分数，并添加到评分列表
         score, not_nans = DiceHelper(include_background=False, sigmoid=True, softmax=True)(y_pred, y)
         dice = score.item()
         nsd = compute_surface_dice(y_pred, y, class_thresholds=[1]).item()
