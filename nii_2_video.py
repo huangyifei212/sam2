@@ -89,11 +89,11 @@ if __name__ == "__main__":
     # parser.add_argument('--threshold', type=int, default=256,
     #                     help='Threshold for the number of positive pixels in a slice')
     parser = argparse.ArgumentParser(description='Process some paths.')
-    parser.add_argument('--image_folder', type=str, default='/mnt/data/huangyifei/segment-anything-2/new_msd/Task03_Liver/imagesTr', 
+    parser.add_argument('--image_folder', type=str, default='/mnt/data/huangyifei/segment-anything-2/new_msd/Task09_Spleen/imagesTr', 
                         help='Path to the image folder')
-    parser.add_argument('--label_folder', type=str, default='/mnt/data/huangyifei/segment-anything-2/new_msd/Task03_Liver/labelsTr', 
+    parser.add_argument('--label_folder', type=str, default='/mnt/data/huangyifei/segment-anything-2/new_msd/Task09_Spleen/labelsTr', 
                         help='Path to the label folder')
-    parser.add_argument('--output_folder', type=str, default='/mnt/data/huangyifei/segment-anything-2/videos/Task03_Liver',
+    parser.add_argument('--output_folder', type=str, default='/mnt/data/huangyifei/segment-anything-2/videos/Task09_Spleen',
                         help='Path to the output folder')
     parser.add_argument('--threshold', type=int, default=256,
                         help='Threshold for the number of positive pixels in a slice')

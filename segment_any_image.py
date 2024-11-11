@@ -63,6 +63,11 @@ with torch.inference_mode(), torch.autocast(device_type="cuda", dtype=torch.bflo
 
         out_mask_logits = np.load(os.path.join(video_dir, frame_names[frame_idx].replace(".jpg", ".npy")))
 
+        # # 新增-仅处理前景像素大于 256 的帧
+        # if np.sum(out_mask_logits > 0) <= 256:
+        #     print(f"Frame {frame_idx} skipped due to insufficient foreground points.")
+        #     continue
+
         predictor.reset_state(inference_state)
         predictor.add_new_mask(inference_state=inference_state, frame_idx=frame_idx, obj_id=ann_obj_id, mask=out_mask_logits > 0.0)
 
